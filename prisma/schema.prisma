@@ -1,0 +1,363 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ScraperRunStatus {
+  running
+  success
+  failed
+}
+
+enum ScraperScheduleType {
+  interval
+  daily
+  weekly
+  paused
+}
+
+enum Severity {
+  low
+  medium
+  high
+  critical
+}
+
+enum RpmStatus {
+  draft
+  completed
+}
+
+enum Difficulty {
+  low
+  medium
+  high
+}
+
+enum MvtConclusion {
+  validated
+  invalidated
+  inconclusive
+}
+
+enum MvtDecision {
+  avanzar
+  pivotear
+  retestear
+  descartar
+}
+
+model Channel {
+  id               String           @id @default(uuid())
+  youtubeChannelId String           @unique
+  handle           String?
+  title            String
+  url              String
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  videos           Video[]
+  scraperRuns      ScraperRun[]
+  scraperSetting   ScraperSetting?
+}
+
+model Video {
+  id             String                           @id @default(uuid())
+  channelId      String
+  youtubeVideoId String                           @unique
+  title          String
+  description    String
+  publishedAt    DateTime
+  url            String
+  thumbnailUrl   String
+  durationSec    Int?
+  viewCount      BigInt?
+  likeCount      BigInt?
+  commentCount   BigInt?
+  tags           String[]
+  rawMetadata    Json
+  firstSeenAt    DateTime                         @default(now())
+  lastSeenAt     DateTime                         @default(now())
+  lastMetricsAt  DateTime?
+  createdAt      DateTime                         @default(now())
+  updatedAt      DateTime                         @updatedAt
+  channel        Channel                          @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  metricSnapshots VideoMetricSnapshot[]
+  transcript     Transcript?
+  aiAnalyses     VideoAiAnalysis[]
+  classifications VideoPainPointClassification[]
+  proposalSources ProposalVideoSource[]
+}
+
+model VideoMetricSnapshot {
+  id          String   @id @default(uuid())
+  videoId     String
+  capturedAt  DateTime @default(now())
+  viewCount   BigInt?
+  likeCount   BigInt?
+  commentCount BigInt?
+  rawMetrics  Json
+  video       Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@index([videoId, capturedAt(sort: Desc)])
+}
+
+model Transcript {
+  id               String   @id @default(uuid())
+  videoId          String   @unique
+  transcriptText   String
+  languageCode     String?
+  transcriptSource String
+  fetchedAt        DateTime @default(now())
+  qualityScore     Float?
+  rawTranscript    Json?
+  video            Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model ScraperRun {
+  id            String           @id @default(uuid())
+  channelId     String
+  startTime     DateTime         @default(now())
+  endTime       DateTime?
+  status        ScraperRunStatus
+  videosFound   Int              @default(0)
+  videosCreated Int              @default(0)
+  videosUpdated Int              @default(0)
+  errorsCount   Int              @default(0)
+  errorsJson    Json?
+  durationMs    Int?
+  triggerRunId  String?
+  channel       Channel          @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}
+
+model ScraperSetting {
+  id           String              @id @default(uuid())
+  channelId    String              @unique
+  scheduleType ScraperScheduleType @default(paused)
+  intervalHours Int?
+  dailyTime    String?
+  weeklyDay    Int?
+  weeklyTime   String?
+  timezone     String              @default("America/Santiago")
+  isActive     Boolean             @default(false)
+  updatedBy    String?
+  updatedAt    DateTime            @updatedAt
+  channel      Channel             @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}
+
+model PainPoint {
+  id                  String                           @id @default(uuid())
+  title               String
+  category            String
+  description         String
+  evidence            String
+  regionCountry       String?
+  severity            Severity
+  digitalOpportunity  String
+  isActive            Boolean                          @default(true)
+  createdAt           DateTime                         @default(now())
+  updatedAt           DateTime                         @updatedAt
+  sources             PainPointSource[]
+  classifications     VideoPainPointClassification[]
+  solutionProposals   SolutionProposal[]
+}
+
+model PainPointSource {
+  id          String   @id @default(uuid())
+  painPointId String
+  sourceName  String
+  sourceUrl   String
+  citationText String
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  painPoint   PainPoint @relation(fields: [painPointId], references: [id], onDelete: Cascade)
+}
+
+model VideoAiAnalysis {
+  id            String   @id @default(uuid())
+  videoId        String
+  analysisType   String
+  modelProvider  String
+  modelName      String
+  promptVersion  String
+  inputHash      String
+  outputJson     Json
+  createdAt      DateTime @default(now())
+  video          Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model VideoPainPointClassification {
+  id                       String   @id @default(uuid())
+  videoId                  String
+  painPointId              String
+  relevanceScore           Float
+  categoryMatch            Boolean
+  reasoning                String
+  businessModelConnection  String
+  latamAdaptationNotes     String
+  confidenceScore          Float
+  evidenceFromTranscript   String[]
+  modelName                String
+  promptVersion            String
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+  video                    Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  painPoint                PainPoint @relation(fields: [painPointId], references: [id], onDelete: Cascade)
+
+  @@unique([videoId, painPointId])
+}
+
+model RpmProfile {
+  id               String               @id @default(uuid())
+  userId           String?
+  status           RpmStatus            @default(draft)
+  version          Int                  @default(1)
+  isActive         Boolean              @default(true)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  answers          RpmAnswer[]
+  interpretations  RpmAiInterpretation[]
+  proposals        SolutionProposal[]
+}
+
+model RpmAnswer {
+  id           String   @id @default(uuid())
+  rpmProfileId String
+  step         String
+  questionKey  String
+  answerText   String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  rpmProfile   RpmProfile @relation(fields: [rpmProfileId], references: [id], onDelete: Cascade)
+}
+
+model RpmAiInterpretation {
+  id            String   @id @default(uuid())
+  rpmProfileId  String
+  modelName     String
+  promptVersion String
+  structuredJson Json
+  vaguenessFlags Json?
+  summary       String
+  createdAt     DateTime @default(now())
+  rpmProfile    RpmProfile @relation(fields: [rpmProfileId], references: [id], onDelete: Cascade)
+}
+
+model SolutionProposal {
+  id                    String   @id @default(uuid())
+  rpmProfileId          String
+  painPointId           String
+  title                 String
+  category              String
+  problemEvidence       String
+  proposedSolution      String
+  targetCustomers       String
+  latamFitReason        String
+  latamAdaptation       String
+  rpmAlignment          String
+  constraintsConsidered String
+  difficulty            Difficulty
+  capitalEstimate       String
+  requiredSkills        String[]
+  firstMvtSuggestion    String
+  fitScore              Int
+  scoreBreakdown        Json
+  status                String @default("active")
+  generatedAt           DateTime @default(now())
+  rpmProfile            RpmProfile @relation(fields: [rpmProfileId], references: [id], onDelete: Cascade)
+  painPoint             PainPoint @relation(fields: [painPointId], references: [id], onDelete: Cascade)
+  videoSources          ProposalVideoSource[]
+  mvtValidations        MvtValidation[]
+}
+
+model ProposalVideoSource {
+  id                    String   @id @default(uuid())
+  proposalId            String
+  videoId               String
+  usageNotes            String
+  extractedModelElements Json?
+  proposal              SolutionProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  video                 Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model MvtValidation {
+  id               String      @id @default(uuid())
+  proposalId       String
+  ownerUserId      String?
+  status           String      @default("draft")
+  decision         MvtDecision?
+  decisionReasoning String?
+  nextStep         String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  proposal         SolutionProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  interviews       MvtInterview[]
+  assumptions      MvtAssumption[]
+  tests            MvtTest[]
+}
+
+model MvtInterview {
+  id               String   @id @default(uuid())
+  validationId     String
+  contactAlias     String
+  channel          String
+  interviewDate    DateTime
+  summary          String
+  currentProblem   String
+  currentSolution  String
+  painIntensity    Int
+  willingnessToPay String
+  evidenceLink     String?
+  evidenceFilePath String?
+  createdAt        DateTime @default(now())
+  validation       MvtValidation @relation(fields: [validationId], references: [id], onDelete: Cascade)
+}
+
+model MvtAssumption {
+  id            String   @id @default(uuid())
+  validationId  String
+  assumptionText String
+  riskLevel     String
+  isCritical    Boolean @default(false)
+  createdAt     DateTime @default(now())
+  validation    MvtValidation @relation(fields: [validationId], references: [id], onDelete: Cascade)
+}
+
+model MvtTest {
+  id               String   @id @default(uuid())
+  validationId     String
+  testType         String
+  description      String
+  metricDefinition String
+  targetValue      String
+  evidenceLink     String?
+  evidenceFilePath String?
+  executedAt       DateTime?
+  createdAt        DateTime @default(now())
+  validation       MvtValidation @relation(fields: [validationId], references: [id], onDelete: Cascade)
+  results          MvtResult[]
+}
+
+model MvtResult {
+  id           String        @id @default(uuid())
+  testId       String
+  targetMetric String
+  actualMetric String
+  conclusion   MvtConclusion
+  analysis     String
+  createdAt    DateTime      @default(now())
+  test         MvtTest       @relation(fields: [testId], references: [id], onDelete: Cascade)
+}
+
+model EvidenceLink {
+  id         String   @id @default(uuid())
+  entityType String
+  entityId   String
+  label      String
+  url        String
+  notes      String?
+  createdAt  DateTime @default(now())
+}
