@@ -45,6 +45,12 @@ export async function PUT(request: Request, { params }: Params) {
     // Trigger background re-classification when a pain point changes.
     triggerClassifierRun({ painPointId: id, maxPairs: 120 });
 
+    // Mark proposals as stale so users regenerate with updated pain points.
+    await prisma.solutionProposal.updateMany({
+      where: { status: "active" },
+      data: { status: "stale" },
+    });
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid request";

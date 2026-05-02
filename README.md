@@ -7,6 +7,7 @@ Aplicacion web para evaluar ideas de negocio en LATAM usando videos reales de `@
 - Sprint 0: documentacion base completada.
 - Sprint 1: scraper real + DB persistente + scheduler + logs completado.
 - Sprint 2: pain points LATAM + clasificador IA completado.
+- Sprint 3: RPM wizard + motor de propuestas dinamicas completado.
 
 ## Stack
 
@@ -73,6 +74,16 @@ Incluye:
 - Reclasificacion automatica cuando se edita un pain point.
 - Vista por video (top pain points) y por pain point (top videos).
 - Filtros por categoria, pain point y umbral de relevancia.
+
+## Sprint 3 (RPM + Propuestas)
+
+Incluye:
+- Wizard RPM por pasos R/P/M con ayuda contextual.
+- Deteccion IA de respuestas vagas por paso.
+- Interpretacion estructurada RPM persistida en DB.
+- Motor de propuestas con 4+ salidas (JSON estructurado).
+- Propuestas trazables a pain points y videos fuente.
+- Regeneracion dinamica al cambiar RPM/pain points o al actualizar videos.
 
 ## Scheduler background
 

@@ -1,3 +1,11 @@
-console.log(
-  "proposals:generate not implemented yet. It will be delivered in Sprint 3 (RPM + Motor de Soluciones).",
-);
+import { generateSolutionProposals } from "../src/lib/proposals/service";
+
+async function main() {
+  const result = await generateSolutionProposals();
+  console.log(JSON.stringify(result, null, 2));
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

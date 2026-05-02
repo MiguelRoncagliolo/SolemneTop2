@@ -1,11 +1,5 @@
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { ProposalsPanel } from "./proposals-panel";
 
 export default function ProposalsPage() {
-  return (
-    <PlaceholderPage
-      title="Propuestas"
-      description="Motor de generación dinámica de soluciones cruzando videos, pain points y RPM."
-      sprint="Sprint 3"
-    />
-  );
+  return <ProposalsPanel />;
 }

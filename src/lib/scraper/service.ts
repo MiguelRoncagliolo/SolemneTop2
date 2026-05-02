@@ -195,6 +195,13 @@ export async function runScraper(input: RunScraperInput): Promise<ScraperRunSumm
       },
     });
 
+    if (videosCreated > 0 || videosUpdated > 0) {
+      await prisma.solutionProposal.updateMany({
+        where: { status: "active" },
+        data: { status: "stale" },
+      });
+    }
+
     return {
       runId: run.id,
       status: "success",
