@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { getEnv } from "@/lib/env";
+import { getOpenAiClient } from "@/lib/ai/client";
 
 const proposalSchema = z.object({
   title: z.string(),
@@ -178,43 +179,29 @@ export async function generateProposalsFromAi(payload: {
   if (!env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is required for proposal generation.");
   }
-
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: env.OPENAI_MODEL,
-      input: [
-        {
-          role: "system",
-          content:
-            "You generate practical startup proposals for LATAM and must follow the schema exactly.",
-        },
-        {
-          role: "user",
-          content: `Build at least 4 proposals from this data:\n${JSON.stringify(payload, null, 2)}`,
-        },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "solution_proposals",
-          strict: true,
-          schema: proposalJsonSchema,
-        },
+  const client = getOpenAiClient();
+  const result = await client.responses.create({
+    model: env.OPENAI_MODEL,
+    input: [
+      {
+        role: "system",
+        content:
+          "You generate practical startup proposals for LATAM and must follow the schema exactly.",
       },
-    }),
+      {
+        role: "user",
+        content: `Build at least 4 proposals from this data:\n${JSON.stringify(payload, null, 2)}`,
+      },
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        name: "solution_proposals",
+        strict: true,
+        schema: proposalJsonSchema,
+      },
+    },
   });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`OpenAI API error (${response.status}): ${message}`);
-  }
-
-  const result = (await response.json()) as unknown;
   const outputText = extractOutputText(result);
   if (!outputText) {
     throw new Error("OpenAI response did not include output_text.");

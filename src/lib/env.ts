@@ -7,6 +7,7 @@ const envSchema = z.object({
   SCRAPER_DEFAULT_MAX_VIDEOS: z.coerce.number().int().min(1).max(200).default(30),
   OPENAI_API_KEY: z.string().min(1).optional(),
   OPENAI_MODEL: z.string().default("gpt-4o-mini"),
+  OPENAI_BASE_URL: z.string().url().optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

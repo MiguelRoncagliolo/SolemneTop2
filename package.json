@@ -15,7 +15,8 @@
     "scraper:run": "tsx scripts/run-scraper.ts",
     "scraper:scheduler": "tsx scripts/scheduler-run.ts",
     "classify:run": "tsx scripts/classify-run.ts",
-    "proposals:generate": "tsx scripts/proposals-generate.ts"
+    "proposals:generate": "tsx scripts/proposals-generate.ts",
+    "eval:check": "tsx scripts/eval-check.ts"
   },
   "dependencies": {
     "@prisma/client": "6.18.0",
@@ -23,6 +24,7 @@
     "date-fns-tz": "^3.2.0",
     "googleapis": "^171.4.0",
     "next": "16.2.4",
+    "openai": "^6.35.0",
     "p-limit": "^7.3.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",

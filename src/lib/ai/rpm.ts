@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { getEnv } from "@/lib/env";
+import { getOpenAiClient } from "@/lib/ai/client";
 
 const vagueCheckSchema = z.object({
   is_vague: z.boolean(),
@@ -125,7 +126,7 @@ async function callStructuredOutput<T>({
   parser,
 }: {
   schemaName: string;
-  schema: object;
+  schema: Record<string, unknown>;
   systemPrompt: string;
   userPrompt: string;
   parser: z.ZodSchema<T>;
@@ -134,36 +135,22 @@ async function callStructuredOutput<T>({
   if (!env.OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY is required for RPM AI processing.");
   }
-
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: env.OPENAI_MODEL,
-      input: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: schemaName,
-          strict: true,
-          schema,
-        },
+  const client = getOpenAiClient();
+  const payload = await client.responses.create({
+    model: env.OPENAI_MODEL,
+    input: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        name: schemaName,
+        strict: true,
+        schema,
       },
-    }),
+    },
   });
-
-  if (!response.ok) {
-    const message = await response.text();
-    throw new Error(`OpenAI API error (${response.status}): ${message}`);
-  }
-
-  const payload = (await response.json()) as unknown;
   const outputText = extractOutputText(payload);
   if (!outputText) {
     throw new Error("OpenAI response did not include output_text.");

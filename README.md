@@ -96,6 +96,14 @@ Incluye:
 - Cierre con decision final (avanzar/pivotear/retestear/descartar).
 - Vista dedicada de evidencias.
 
+## Sprint 5 (Pulido y testing)
+
+Incluye:
+- Chequeo automatico de rubrica via API y UI en `/evaluation`.
+- Script de verificacion: `npm run eval:check`.
+- Señalizacion explicita de bloqueos para demo destructiva.
+- Compatibilidad OpenAI/OpenRouter por `OPENAI_BASE_URL` opcional.
+
 ## Scheduler background
 
 Workflow: `.github/workflows/scraper-scheduler.yml`

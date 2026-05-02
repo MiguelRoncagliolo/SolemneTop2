@@ -1,4 +1,5 @@
 import { getEnv } from "@/lib/env";
+import { getOpenAiClient } from "@/lib/ai/client";
 
 import {
   painPointClassificationJsonSchema,
@@ -105,35 +106,22 @@ Scoring rules:
 - category_match is true only if business context is aligned.
 `;
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: env.OPENAI_MODEL,
-      input: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "video_pain_point_classification",
-          strict: true,
-          schema: painPointClassificationJsonSchema,
-        },
+  const client = getOpenAiClient();
+  const payload = await client.responses.create({
+    model: env.OPENAI_MODEL,
+    input: [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        name: "video_pain_point_classification",
+        strict: true,
+        schema: painPointClassificationJsonSchema,
       },
-    }),
+    },
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`OpenAI API error (${response.status}): ${errorText}`);
-  }
-
-  const payload = (await response.json()) as unknown;
   const outputText = extractOutputText(payload);
   if (!outputText) {
     throw new Error("OpenAI response did not include output_text.");
