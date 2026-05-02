@@ -1,4 +1,4 @@
-﻿-- CreateEnum
+-- CreateEnum
 CREATE TYPE "ScraperRunStatus" AS ENUM ('running', 'success', 'failed');
 
 -- CreateEnum

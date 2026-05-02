@@ -46,9 +46,14 @@ cp .env.example .env
 
 2. Completar en `.env`:
 - `DATABASE_URL`
+- `DIRECT_URL`
 - `YOUTUBE_API_KEY`
 - `STARTER_STORY_HANDLE` (por defecto `@starterstory`)
 - `SCRAPER_DEFAULT_MAX_VIDEOS` (por defecto `30`)
+
+Notas Supabase:
+- `DATABASE_URL` debe usar pooler `:6543` con `?pgbouncer=true&connection_limit=1`.
+- `DIRECT_URL` debe usar host directo `db.<project-ref>.supabase.co:5432` para migraciones.
 
 3. Instalar dependencias:
 
@@ -93,6 +98,7 @@ npm run dev
 
 Secrets requeridos en GitHub:
 - `DATABASE_URL`
+- `DIRECT_URL`
 - `YOUTUBE_API_KEY`
 - `STARTER_STORY_HANDLE`
 - `SCRAPER_DEFAULT_MAX_VIDEOS`
