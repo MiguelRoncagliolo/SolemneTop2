@@ -1,11 +1,5 @@
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { ClassifierPanel } from "./classifier-panel";
 
 export default function ClassifierPage() {
-  return (
-    <PlaceholderPage
-      title="Clasificador"
-      description="Clasificación video x pain point con structured outputs y filtros."
-      sprint="Sprint 2"
-    />
-  );
+  return <ClassifierPanel />;
 }

@@ -11,6 +11,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
+    "pain-points:seed": "tsx scripts/seed-pain-points.ts",
     "scraper:run": "tsx scripts/run-scraper.ts",
     "scraper:scheduler": "tsx scripts/scheduler-run.ts",
     "classify:run": "tsx scripts/classify-run.ts",

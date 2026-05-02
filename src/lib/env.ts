@@ -5,6 +5,8 @@ const envSchema = z.object({
   YOUTUBE_API_KEY: z.string().min(1),
   STARTER_STORY_HANDLE: z.string().default("@starterstory"),
   SCRAPER_DEFAULT_MAX_VIDEOS: z.coerce.number().int().min(1).max(200).default(30),
+  OPENAI_API_KEY: z.string().min(1).optional(),
+  OPENAI_MODEL: z.string().default("gpt-4o-mini"),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

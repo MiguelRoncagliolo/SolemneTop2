@@ -1,42 +1,24 @@
 # Starter Story Intelligence Engine
 
-Aplicación web inteligente para evaluar ideas de negocio en LATAM usando videos reales de `@starterstory`, clasificación con IA, perfil RPM y validación MVT documentada.
+Aplicacion web para evaluar ideas de negocio en LATAM usando videos reales de `@starterstory`, clasificacion con IA, perfil RPM y validacion MVT.
 
-## Estado actual
+## Estado
 
-Proyecto en construcción por sprints (entrega actual: Sprint 0 + base de Sprint 1).
+- Sprint 0: documentacion base completada.
+- Sprint 1: scraper real + DB persistente + scheduler + logs completado.
+- Sprint 2: pain points LATAM + clasificador IA completado.
 
-- Sprint 0: documentación de arquitectura y plan.
-- Sprint 1 (en progreso): scraper real + DB persistente + scheduler + logs.
+## Stack
 
-## Documentación inicial
-
-- [Arquitectura](./docs/architecture.md)
-- [Plan de sprints](./docs/sprint-plan.md)
-- [Modelo de datos](./docs/data-model.md)
-- [Estrategia YouTube](./docs/youtube-strategy.md)
-- [Prompts IA](./docs/ai-prompts.md)
-- [Proceso MVT](./docs/mvt-process.md)
-
-## Stack objetivo
-
-- Next.js (App Router) + TypeScript estricto
-- Tailwind + shadcn/ui
+- Next.js App Router + TypeScript
+- Tailwind CSS
 - Supabase PostgreSQL
 - Prisma ORM
-- YouTube Data API v3 + extracción de transcript
-- LLM con structured outputs JSON
-- Jobs en background con Trigger.dev + scheduler configurable desde UI
-- Deploy en Vercel
+- YouTube Data API v3
+- OpenAI Responses API con structured outputs
+- GitHub Actions para scheduler background
 
-## Requisitos de entorno
-
-- Node.js 22+
-- npm 11+
-- Base PostgreSQL (Supabase recomendado)
-- API key de YouTube Data API v3
-
-## Configuración rápida
+## Configuracion
 
 1. Copiar variables:
 
@@ -45,36 +27,30 @@ cp .env.example .env
 ```
 
 2. Completar en `.env`:
-- `DATABASE_URL`
-- `DIRECT_URL`
+
+- `DATABASE_URL` (pooler `:6543` con `?pgbouncer=true&connection_limit=1`)
+- `DIRECT_URL` (host directo `db.<project-ref>.supabase.co:5432`)
 - `YOUTUBE_API_KEY`
-- `STARTER_STORY_HANDLE` (por defecto `@starterstory`)
-- `SCRAPER_DEFAULT_MAX_VIDEOS` (por defecto `30`)
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL` (ejemplo: `gpt-4o-mini`)
+- `STARTER_STORY_HANDLE` (default `@starterstory`)
+- `SCRAPER_DEFAULT_MAX_VIDEOS` (default `30`)
 
-Notas Supabase:
-- `DATABASE_URL` debe usar pooler `:6543` con `?pgbouncer=true&connection_limit=1`.
-- `DIRECT_URL` debe usar host directo `db.<project-ref>.supabase.co:5432` para migraciones.
-
-3. Instalar dependencias:
+3. Instalar y preparar DB:
 
 ```bash
 npm install
-```
-
-4. Generar cliente Prisma y migrar:
-
-```bash
 npm run db:generate
 npm run db:migrate
 ```
 
-5. Ejecutar app:
+4. Ejecutar app:
 
 ```bash
 npm run dev
 ```
 
-## Scripts principales
+## Scripts
 
 - `npm run dev`
 - `npm run build`
@@ -84,25 +60,33 @@ npm run dev
 - `npm run db:seed`
 - `npm run scraper:run`
 - `npm run scraper:scheduler`
-- `npm run classify:run` (placeholder Sprint 2)
-- `npm run proposals:generate` (placeholder Sprint 3)
+- `npm run classify:run`
+- `npm run proposals:generate`
+
+## Sprint 2 (Pain Points + Clasificador)
+
+Incluye:
+- CRUD de pain points con fuente y evidencia.
+- Seed de 8+ pain points LATAM reales con fuentes citadas.
+- Clasificacion video x pain point con structured JSON.
+- Boton de clasificar/reclasificar.
+- Reclasificacion automatica cuando se edita un pain point.
+- Vista por video (top pain points) y por pain point (top videos).
+- Filtros por categoria, pain point y umbral de relevancia.
 
 ## Scheduler background
 
-- Se incluye workflow en `.github/workflows/scraper-scheduler.yml`.
-- Corre cada hora y respeta configuración guardada en `scraper_settings`:
-  - intervalo
-  - diario
-  - semanal
-  - pausado/activo
+Workflow: `.github/workflows/scraper-scheduler.yml`
 
-Secrets requeridos en GitHub:
+Secrets requeridos:
 - `DATABASE_URL`
 - `DIRECT_URL`
 - `YOUTUBE_API_KEY`
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`
 - `STARTER_STORY_HANDLE`
 - `SCRAPER_DEFAULT_MAX_VIDEOS`
 
-## Nota importante
+## Nota
 
-No se hardcodearán resultados para simular scraping, clasificación o propuestas. Seeds, cuando existan, serán marcadas explícitamente como datos demo para desarrollo.
+No hay resultados hardcodeados para simular scraping o clasificacion. Seeds se identifican como datos base para investigacion y desarrollo.
