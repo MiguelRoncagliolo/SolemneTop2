@@ -1,11 +1,5 @@
-import { PlaceholderPage } from "@/components/placeholder-page";
+import { MvtPanel } from "./mvt-panel";
 
 export default function MvtPage() {
-  return (
-    <PlaceholderPage
-      title="MVT"
-      description="Registro de entrevistas, hipótesis, tests, análisis y decisión final."
-      sprint="Sprint 4"
-    />
-  );
+  return <MvtPanel />;
 }
