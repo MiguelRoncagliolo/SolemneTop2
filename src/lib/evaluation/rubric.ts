@@ -26,39 +26,29 @@ export interface RubricSnapshot {
 }
 
 export async function getRubricSnapshot(prisma: PrismaClient): Promise<RubricSnapshot> {
-  const [
-    videos,
-    scraperRuns,
-    painPoints,
-    classifications,
-    rpmCompleted,
-    proposalsActive,
-    mvtValidations,
-    mvtInterviews,
-    evidenceLinks,
-    settingsActive,
-    latestRuns,
-  ] = await Promise.all([
-    prisma.video.count(),
-    prisma.scraperRun.count(),
-    prisma.painPoint.count({ where: { isActive: true } }),
-    prisma.videoPainPointClassification.count(),
-    prisma.rpmProfile.count({ where: { status: "completed", isActive: true } }),
-    prisma.solutionProposal.count({ where: { status: "active" } }),
-    prisma.mvtValidation.count(),
-    prisma.mvtInterview.count(),
-    prisma.evidenceLink.count(),
-    prisma.scraperSetting.count({ where: { isActive: true } }),
-    prisma.scraperRun.findMany({
-      orderBy: { startTime: "desc" },
-      take: 2,
-      select: {
-        videosCreated: true,
-        videosUpdated: true,
-        status: true,
-      },
-    }),
-  ]);
+  const videos = await prisma.video.count();
+  const scraperRuns = await prisma.scraperRun.count();
+  const painPoints = await prisma.painPoint.count({ where: { isActive: true } });
+  const classifications = await prisma.videoPainPointClassification.count();
+  const rpmCompleted = await prisma.rpmProfile.count({
+    where: { status: "completed", isActive: true },
+  });
+  const proposalsActive = await prisma.solutionProposal.count({
+    where: { status: "active" },
+  });
+  const mvtValidations = await prisma.mvtValidation.count();
+  const mvtInterviews = await prisma.mvtInterview.count();
+  const evidenceLinks = await prisma.evidenceLink.count();
+  const settingsActive = await prisma.scraperSetting.count({ where: { isActive: true } });
+  const latestRuns = await prisma.scraperRun.findMany({
+    orderBy: { startTime: "desc" },
+    take: 2,
+    select: {
+      videosCreated: true,
+      videosUpdated: true,
+      status: true,
+    },
+  });
 
   const incrementalDetected =
     latestRuns.length >= 2 &&
