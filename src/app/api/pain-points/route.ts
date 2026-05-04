@@ -39,6 +39,7 @@ export async function POST(request: Request) {
         regionCountry: parsed.regionCountry,
         severity: parsed.severity,
         digitalOpportunity: parsed.digitalOpportunity,
+        source: "user_edited",
         sources: {
           create: {
             sourceName: parsed.source.sourceName,

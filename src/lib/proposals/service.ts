@@ -21,6 +21,9 @@ export async function generateSolutionProposals() {
   if (!rpmInterpretation) {
     throw new Error("RPM interpretation not found. Complete RPM wizard first.");
   }
+  if (!rpmProfile.generatedM) {
+    throw new Error("Generated Massive Action Plan not found. Generate M first.");
+  }
 
   const painPoints = await prisma.painPoint.findMany({
     where: { isActive: true },
@@ -42,6 +45,7 @@ export async function generateSolutionProposals() {
 
   const aiPayload = {
     rpmInterpretation: rpmInterpretation.structuredJson as Prisma.JsonObject,
+    generatedMassiveActionPlan: rpmProfile.generatedM as Prisma.JsonObject,
     painPoints: painPoints.map((point) => ({
       id: point.id,
       title: point.title,
@@ -49,6 +53,8 @@ export async function generateSolutionProposals() {
       severity: point.severity,
       evidence: point.evidence,
       digitalOpportunity: point.digitalOpportunity,
+      source: point.source,
+      generatedAt: point.generatedAt?.toISOString() ?? null,
     })),
     rankedClassifications: classifications.map((item) => ({
       painPointId: item.painPointId,

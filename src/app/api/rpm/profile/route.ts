@@ -11,7 +11,7 @@ const stepAnswersSchema = z.record(z.string(), z.string());
 const answersSchema = z.object({
   R: stepAnswersSchema,
   P: stepAnswersSchema,
-  M: stepAnswersSchema,
+  M: stepAnswersSchema.optional().default({}),
 });
 
 const saveSchema = z.object({

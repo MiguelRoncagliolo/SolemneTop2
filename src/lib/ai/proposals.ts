@@ -156,6 +156,7 @@ function extractOutputText(payload: unknown): string | null {
 
 export async function generateProposalsFromAi(payload: {
   rpmInterpretation: object;
+  generatedMassiveActionPlan: object;
   painPoints: Array<{
     id: string;
     title: string;
@@ -163,6 +164,8 @@ export async function generateProposalsFromAi(payload: {
     severity: string;
     evidence: string;
     digitalOpportunity: string;
+    source: string;
+    generatedAt: string | null;
   }>;
   rankedClassifications: Array<{
     painPointId: string;
@@ -186,7 +189,7 @@ export async function generateProposalsFromAi(payload: {
       {
         role: "system",
         content:
-          "You generate practical startup proposals for LATAM and must follow the schema exactly.",
+          "You generate practical startup proposals for LATAM and must follow the schema exactly. Prioritize AI-generated pain points and align plans with the generated Massive Action Plan.",
       },
       {
         role: "user",

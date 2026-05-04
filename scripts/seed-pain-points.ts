@@ -25,6 +25,7 @@ async function main() {
         regionCountry: seed.regionCountry,
         severity: seed.severity,
         digitalOpportunity: seed.digitalOpportunity,
+        source: "legacy_manual",
         sources: {
           create: {
             sourceName: seed.sourceName,

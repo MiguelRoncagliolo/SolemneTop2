@@ -18,6 +18,8 @@ type PainPoint = {
   regionCountry: string | null;
   severity: "low" | "medium" | "high" | "critical";
   digitalOpportunity: string;
+  source: string;
+  generatedAt: string | null;
   isActive: boolean;
   sources: Source[];
   _count: { classifications: number };
@@ -36,18 +38,35 @@ type FormState = {
   citationText: string;
 };
 
+type GenerationInfo = {
+  generatedCount: number;
+  videosUsed: number;
+  generatedAt: string;
+  previousActiveAiDisabled: number;
+};
+
 const initialForm: FormState = {
   title: "",
   category: "fintech",
   description: "",
   evidence: "",
   regionCountry: "LatAm",
-  severity: "high" as const,
+  severity: "high",
   digitalOpportunity: "",
   sourceName: "",
   sourceUrl: "",
   citationText: "",
 };
+
+function formatDate(value: string | null): string {
+  if (!value) {
+    return "N/A";
+  }
+  return new Intl.DateTimeFormat("es-CL", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
 
 export function PainPointsPanel() {
   const [painPoints, setPainPoints] = useState<PainPoint[]>([]);
@@ -55,11 +74,44 @@ export function PainPointsPanel() {
   const [message, setMessage] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(initialForm);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [generationInfo, setGenerationInfo] = useState<GenerationInfo | null>(null);
 
   const categories = useMemo(
     () => Array.from(new Set(painPoints.map((point) => point.category))).sort(),
     [painPoints],
   );
+
+  const activeAiGenerated = useMemo(
+    () => painPoints.filter((point) => point.isActive && point.source === "ai_generated"),
+    [painPoints],
+  );
+
+  const latestAiGeneration = useMemo(() => {
+    const generatedDates = activeAiGenerated
+      .map((point) => point.generatedAt)
+      .filter((value): value is string => Boolean(value))
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+    return generatedDates[0] ?? null;
+  }, [activeAiGenerated]);
+
+  const latestGenerationVideosUsed = useMemo(() => {
+    if (!latestAiGeneration) {
+      return 0;
+    }
+
+    const idPattern = /[A-Za-z0-9_-]{11}/g;
+    const ids = new Set<string>();
+    for (const point of activeAiGenerated) {
+      if (point.generatedAt !== latestAiGeneration) {
+        continue;
+      }
+      const matches = point.evidence.match(idPattern) ?? [];
+      for (const match of matches) {
+        ids.add(match);
+      }
+    }
+    return ids.size;
+  }, [activeAiGenerated, latestAiGeneration]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -97,7 +149,7 @@ export function PainPointsPanel() {
       }),
     });
     const json = await response.json();
-    setMessage(json.ok ? "Pain point creado." : json.message ?? "Error");
+    setMessage(json.ok ? "Pain point manual creado." : json.message ?? "Error");
     if (json.ok) {
       setForm(initialForm);
       await load();
@@ -112,6 +164,27 @@ export function PainPointsPanel() {
       json.ok
         ? `Seed completado: creados ${json.created}, omitidos ${json.skipped}.`
         : json.message ?? "Error",
+    );
+    await load();
+  }
+
+  async function generateFromVideos() {
+    setMessage(null);
+    const response = await fetch("/api/pain-points/generate", { method: "POST" });
+    const json = await response.json();
+    if (!json.ok) {
+      setMessage(json.message ?? "No se pudieron generar pain points.");
+      return;
+    }
+
+    setGenerationInfo({
+      generatedCount: json.generatedCount,
+      videosUsed: json.videosUsed,
+      generatedAt: json.generatedAt,
+      previousActiveAiDisabled: json.previousActiveAiDisabled,
+    });
+    setMessage(
+      `Generados ${json.generatedCount} pain points desde ${json.videosUsed} videos. Reclasificacion disparada en background.`,
     );
     await load();
   }
@@ -149,7 +222,7 @@ export function PainPointsPanel() {
     const json = await response.json();
     setMessage(
       json.ok
-        ? "Pain point actualizado. Se lanzó reclasificación automática."
+        ? "Pain point actualizado. Se lanzo reclasificacion automatica."
         : json.message ?? "Error",
     );
     setEditingId(null);
@@ -159,32 +232,60 @@ export function PainPointsPanel() {
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-zinc-300 bg-white p-4">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-bold">Pain Points LATAM</h2>
             <p className="mt-1 text-sm text-zinc-600">
-              CRUD de pain points con fuente citada y evidencia.
+              El flujo principal genera pain points automaticamente desde videos analizados.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => void seedPainPoints()}
-            className="rounded bg-zinc-800 px-3 py-2 text-sm font-semibold text-white"
-          >
-            Cargar 8+ pain points base
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void generateFromVideos()}
+              className="rounded bg-zinc-900 px-3 py-2 text-sm font-semibold text-white"
+            >
+              Generar pain points desde videos
+            </button>
+            <button
+              type="button"
+              onClick={() => void seedPainPoints()}
+              className="rounded border border-zinc-300 px-3 py-2 text-sm"
+            >
+              Cargar seed manual (opcional)
+            </button>
+          </div>
         </div>
+
+        <div className="mt-3 rounded border border-zinc-200 bg-zinc-50 p-3 text-xs text-zinc-700">
+          <p>Pain points IA activos: {activeAiGenerated.length}</p>
+          <p>Ultima generacion IA: {formatDate(latestAiGeneration)}</p>
+          <p>
+            Videos usados en ultima generacion:{" "}
+            {generationInfo?.videosUsed ?? latestGenerationVideosUsed}
+          </p>
+          <p>
+            Generados en ultima corrida:{" "}
+            {generationInfo?.generatedCount ?? activeAiGenerated.length}
+          </p>
+        </div>
+
         {message ? (
           <p className="mt-3 rounded bg-zinc-100 px-3 py-2 text-sm text-zinc-700">{message}</p>
         ) : null}
       </section>
 
-      <section className="rounded-lg border border-zinc-300 bg-white p-4">
-        <h3 className="text-lg font-semibold">Crear pain point</h3>
+      <details className="rounded-lg border border-zinc-300 bg-white p-4">
+        <summary className="cursor-pointer text-lg font-semibold">
+          Edicion manual opcional
+        </summary>
+        <p className="mt-1 text-sm text-zinc-600">
+          Solo usar si necesitas ajustar o agregar pain points manualmente.
+        </p>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <Input label="Título" value={form.title} onChange={(value) => setForm((current) => ({ ...current, title: value }))} />
-          <Input label="Categoría" value={form.category} onChange={(value) => setForm((current) => ({ ...current, category: value }))} />
-          <Input label="Región/país" value={form.regionCountry} onChange={(value) => setForm((current) => ({ ...current, regionCountry: value }))} />
+          <Input label="Titulo" value={form.title} onChange={(value) => setForm((current) => ({ ...current, title: value }))} />
+          <Input label="Categoria" value={form.category} onChange={(value) => setForm((current) => ({ ...current, category: value }))} />
+          <Input label="Region/pais" value={form.regionCountry} onChange={(value) => setForm((current) => ({ ...current, regionCountry: value }))} />
           <Select
             label="Severidad"
             value={form.severity}
@@ -197,7 +298,7 @@ export function PainPointsPanel() {
             options={["low", "medium", "high", "critical"]}
           />
           <TextArea
-            label="Descripción"
+            label="Descripcion"
             value={form.description}
             onChange={(value) => setForm((current) => ({ ...current, description: value }))}
           />
@@ -207,7 +308,7 @@ export function PainPointsPanel() {
             onChange={(value) => setForm((current) => ({ ...current, evidence: value }))}
           />
           <TextArea
-            label="Oportunidad digital/tecnológica"
+            label="Oportunidad digital/tecnologica"
             value={form.digitalOpportunity}
             onChange={(value) =>
               setForm((current) => ({ ...current, digitalOpportunity: value }))
@@ -234,18 +335,18 @@ export function PainPointsPanel() {
           className="mt-4 rounded bg-zinc-900 px-4 py-2 text-sm font-semibold text-white"
           onClick={() => void createPainPoint()}
         >
-          Guardar pain point
+          Guardar pain point manual
         </button>
-      </section>
+      </details>
 
       <section className="rounded-lg border border-zinc-300 bg-white p-4">
         <h3 className="text-lg font-semibold">Pain points registrados ({painPoints.length})</h3>
         {loading ? <p className="mt-3 text-sm text-zinc-500">Cargando...</p> : null}
         {!loading && painPoints.length === 0 ? (
-          <p className="mt-3 text-sm text-zinc-500">No hay pain points aún.</p>
+          <p className="mt-3 text-sm text-zinc-500">No hay pain points aun.</p>
         ) : null}
         {categories.length > 0 ? (
-          <p className="mt-2 text-xs text-zinc-500">Categorías: {categories.join(", ")}</p>
+          <p className="mt-2 text-xs text-zinc-500">Categorias: {categories.join(", ")}</p>
         ) : null}
         <div className="mt-3 space-y-3">
           {painPoints.map((point) => {
@@ -260,6 +361,9 @@ export function PainPointsPanel() {
                     <p className="text-xs text-zinc-600">
                       {point.category} | severidad: {point.severity} | clasificaciones:{" "}
                       {point._count.classifications}
+                    </p>
+                    <p className="text-xs text-zinc-600">
+                      origen: {point.source} | generado: {formatDate(point.generatedAt)}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -338,17 +442,17 @@ function PainPointEditor({
   return (
     <div className="mt-3 grid gap-2">
       <Input
-        label="Título"
+        label="Titulo"
         value={painPoint.title}
         onChange={(value) => onChange({ ...painPoint, title: value })}
       />
       <Input
-        label="Categoría"
+        label="Categoria"
         value={painPoint.category}
         onChange={(value) => onChange({ ...painPoint, category: value })}
       />
       <TextArea
-        label="Descripción"
+        label="Descripcion"
         value={painPoint.description}
         onChange={(value) => onChange({ ...painPoint, description: value })}
       />

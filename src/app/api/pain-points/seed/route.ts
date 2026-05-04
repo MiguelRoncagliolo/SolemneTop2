@@ -30,6 +30,7 @@ export async function POST() {
         regionCountry: seed.regionCountry,
         severity: seed.severity,
         digitalOpportunity: seed.digitalOpportunity,
+        source: "legacy_manual",
         sources: {
           create: {
             sourceName: seed.sourceName,

@@ -25,6 +25,7 @@ export async function PUT(request: Request, { params }: Params) {
         regionCountry: parsed.regionCountry,
         severity: parsed.severity,
         digitalOpportunity: parsed.digitalOpportunity,
+        source: "user_edited",
       },
       include: {
         sources: true,

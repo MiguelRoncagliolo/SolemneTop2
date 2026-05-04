@@ -26,8 +26,28 @@ const rpmInterpretationSchema = z.object({
   warnings_or_gaps: z.array(z.string()),
 });
 
+const massiveActionPlanSchema = z.object({
+  generated: z.literal(true),
+  summary: z.string().min(12),
+  actions: z
+    .array(
+      z.object({
+        category: z.enum(["research", "build", "sales", "validation", "learning"]),
+        title: z.string().min(4),
+        description: z.string().min(12),
+        impact: z.string().min(2),
+        effort: z.string().min(2),
+        priority: z.string().min(2),
+        timeframe: z.string().min(2),
+      }),
+    )
+    .min(6),
+  warnings_or_gaps: z.array(z.string()),
+});
+
 export type RpmInterpretation = z.infer<typeof rpmInterpretationSchema>;
 export type VagueCheck = z.infer<typeof vagueCheckSchema>;
+export type MassiveActionPlan = z.infer<typeof massiveActionPlanSchema>;
 
 const vagueSchemaJson = {
   type: "object",
@@ -79,6 +99,46 @@ const interpretationSchemaJson = {
     "summary",
     "warnings_or_gaps",
   ],
+} as const;
+
+const massiveActionPlanSchemaJson = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    generated: { type: "boolean", const: true },
+    summary: { type: "string" },
+    actions: {
+      type: "array",
+      minItems: 6,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          category: {
+            type: "string",
+            enum: ["research", "build", "sales", "validation", "learning"],
+          },
+          title: { type: "string" },
+          description: { type: "string" },
+          impact: { type: "string" },
+          effort: { type: "string" },
+          priority: { type: "string" },
+          timeframe: { type: "string" },
+        },
+        required: [
+          "category",
+          "title",
+          "description",
+          "impact",
+          "effort",
+          "priority",
+          "timeframe",
+        ],
+      },
+    },
+    warnings_or_gaps: { type: "array", items: { type: "string" } },
+  },
+  required: ["generated", "summary", "actions", "warnings_or_gaps"],
 } as const;
 
 function extractOutputText(payload: unknown): string | null {
@@ -191,5 +251,25 @@ export async function interpretRpmAnswers(
     systemPrompt:
       "Transform RPM answers into a practical entrepreneurial profile. Be concrete and avoid generic advice.",
     userPrompt: `RPM answers JSON:\n${JSON.stringify(rpmAnswers, null, 2)}`,
+  });
+}
+
+export async function generateMassiveActionPlan(profile: {
+  R: Record<string, string>;
+  P: Record<string, string>;
+  constraints: {
+    available_time_per_week: string;
+    skills: string;
+    capital: string;
+    resources: string;
+  };
+}): Promise<MassiveActionPlan> {
+  return callStructuredOutput({
+    schemaName: "rpm_massive_action_plan",
+    schema: massiveActionPlanSchemaJson,
+    parser: massiveActionPlanSchema,
+    systemPrompt:
+      "You are a LATAM startup execution coach. Build a concrete Massive Action Plan grouped into actionable categories.",
+    userPrompt: `Generate a Massive Action Plan from this profile JSON:\n${JSON.stringify(profile, null, 2)}`,
   });
 }
