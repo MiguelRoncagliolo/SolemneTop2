@@ -16,22 +16,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="h-full antialiased">
-      <body className="min-h-full bg-zinc-50 text-zinc-900">
+      <body className="min-h-full bg-slate-100 text-slate-900">
         <div className="flex min-h-full flex-col">
-          <header className="border-b border-zinc-300 bg-white">
+          <header className="border-b border-slate-300 bg-white/95 backdrop-blur">
             <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-                  Proyecto Académico
+                <p className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+                  Proyecto Academico
                 </p>
-                <h1 className="text-lg font-bold">Starter Story Intelligence Engine</h1>
+                <h1 className="text-lg font-bold text-slate-900">Starter Story Intelligence Engine</h1>
               </div>
             </div>
             <MainNav />
           </header>
-          <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-6">
-            {children}
-          </main>
+          <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-6">{children}</main>
         </div>
       </body>
     </html>

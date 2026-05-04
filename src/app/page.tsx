@@ -6,6 +6,7 @@ function formatDate(value: Date | null): string {
   if (!value) {
     return "N/A";
   }
+
   return new Intl.DateTimeFormat("es-CL", {
     dateStyle: "short",
     timeStyle: "short",
@@ -79,38 +80,39 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-zinc-300 bg-white p-4">
-        <h2 className="text-xl font-bold">Dashboard</h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          Estado general del pipeline y cumplimiento de rúbrica.
+      <section className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900">Dashboard</h2>
+        <p className="mt-1 text-sm text-slate-700">
+          Estado general del pipeline y cumplimiento de rubrica.
         </p>
         {!data.dbReady ? (
-          <p className="mt-3 rounded-md bg-amber-100 px-3 py-2 text-sm text-amber-900">
-            DB no disponible aún. Configura `DATABASE_URL` y ejecuta migraciones.
+          <p className="mt-3 rounded-md border border-amber-200 bg-amber-100 px-3 py-2 text-sm text-amber-950">
+            DB no disponible aun. Configura `DATABASE_URL` y ejecuta migraciones.
           </p>
         ) : null}
       </section>
 
       <section className="grid gap-3 md:grid-cols-3">
         <StatCard label="Videos procesados" value={String(data.videosCount)} />
-        <StatCard label="Última ejecución scraper" value={formatDate(data.lastRun?.startTime ?? null)} />
+        <StatCard label="Ultima ejecucion scraper" value={formatDate(data.lastRun?.startTime ?? null)} />
         <StatCard label="Scheduler activo" value={data.activeSettingsCount > 0 ? "Activo" : "Pausado"} />
         <StatCard label="Pain points activos" value={String(data.painPointsCount)} />
         <StatCard label="RPM" value={data.rpmCompleted > 0 ? "Completado" : "Pendiente"} />
         <StatCard label="Propuestas" value={String(data.proposalsCount)} />
       </section>
 
-      <section className="rounded-lg border border-zinc-300 bg-white p-4">
-        <h3 className="text-lg font-semibold">Checklist de rúbrica</h3>
+      <section className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm">
+        <h3 className="text-lg font-semibold text-slate-900">Checklist de rubrica</h3>
         <ul className="mt-3 space-y-2">
           {checklist.map((item) => (
-            <li key={item.label} className="flex items-center justify-between rounded-md border border-zinc-200 px-3 py-2">
-              <span className="text-sm">{item.label}</span>
+            <li
+              key={item.label}
+              className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 px-3 py-2"
+            >
+              <span className="text-sm text-slate-800">{item.label}</span>
               <span
                 className={`rounded px-2 py-1 text-xs font-semibold ${
-                  item.done
-                    ? "bg-emerald-100 text-emerald-800"
-                    : "bg-zinc-200 text-zinc-700"
+                  item.done ? "bg-emerald-100 text-emerald-900" : "bg-slate-200 text-slate-800"
                 }`}
               >
                 {item.done ? "OK" : "Pendiente"}
@@ -125,9 +127,9 @@ export default async function DashboardPage() {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <article className="rounded-lg border border-zinc-300 bg-white p-4">
-      <p className="text-sm text-zinc-600">{label}</p>
-      <p className="mt-2 text-xl font-bold">{value}</p>
+    <article className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm">
+      <p className="text-sm font-medium text-slate-700">{label}</p>
+      <p className="mt-2 text-2xl font-bold text-slate-900">{value}</p>
     </article>
   );
 }
